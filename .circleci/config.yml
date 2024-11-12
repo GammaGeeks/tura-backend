@@ -4,16 +4,7 @@ orbs:
   aws-ecr: circleci/aws-ecr@8.1
   aws-cli: circleci/aws-cli@3.1
 
-parameters:
-  aws-access-key-id:
-    type: env_var_name
-    default: AWS_ACCESS_KEY_ID
-  aws-secret-access-key:
-    type: env_var_name
-    default: AWS_SECRET_ACCESS_KEY
-  aws-region:
-    type: env_var_name
-    default: AWS_REGION
+# Remove the parameters section as we'll use environment variables directly
 
 jobs:
   test:
@@ -93,6 +84,9 @@ workflows:
           dockerfile: Dockerfile
           path: .
           create-repo: true
+          aws-access-key-id: AWS_ACCESS_KEY_ID
+          aws-secret-access-key: AWS_SECRET_ACCESS_KEY
+          region: AWS_REGION
       - deploy-task:
           requires:
             - aws-ecr/build-and-push-image
