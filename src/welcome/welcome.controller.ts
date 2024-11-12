@@ -5,7 +5,7 @@ export class WelcomeController {
   @Get()
   getWelcome() {
     return {
-      message: 'Welcome to TuraAPI app',
+      message: 'Welcome to TuraAPI backend application',
       statusCode: HttpStatus.OK,
     };
   }
