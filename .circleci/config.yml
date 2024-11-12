@@ -4,12 +4,11 @@ orbs:
   aws-ecr: circleci/aws-ecr@8.1
   aws-cli: circleci/aws-cli@3.1
 
-# Remove the parameters section as we'll use environment variables directly
-
 jobs:
   test:
     docker:
       - image: cimg/node:18.0
+    resource_class: small
     steps:
       - checkout
       - restore_cache:
@@ -33,6 +32,7 @@ jobs:
   deploy-task:
     docker:
       - image: cimg/python:3.9
+    resource_class: small
     steps:
       - aws-cli/setup
       - run:
