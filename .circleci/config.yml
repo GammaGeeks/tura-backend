@@ -7,7 +7,7 @@ orbs:
 jobs:
   test:
     docker:
-      - image: circleci/node
+      - image: cimg/node:18.0    # Updated to use cimg instead of circleci
 
     steps:
       - checkout
@@ -31,7 +31,7 @@ jobs:
 
   deploy-task:
     docker:
-      - image: circleci/python
+      - image: cimg/python:3.9    # Updated to use cimg instead of circleci
     steps:
       - aws-cli/setup
       - run:
