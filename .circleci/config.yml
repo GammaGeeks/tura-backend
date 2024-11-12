@@ -7,8 +7,8 @@ orbs:
 jobs:
   test:
     docker:
-      - image: cimg/node:18.0
-    resource_class: medium
+      - image: circleci/node:20
+
     steps:
       - checkout
       - restore_cache:
@@ -31,8 +31,8 @@ jobs:
 
   deploy-task:
     docker:
-      - image: cimg/python:3.9
-    resource_class: medium
+      - image: python:3.9-alpine3.11
+
     steps:
       - aws-cli/setup
       - run:
