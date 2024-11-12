@@ -7,7 +7,7 @@ orbs:
 jobs:
   test:
     docker:
-      - image: circleci/node:18
+      - image: circleci/node
 
     steps:
       - checkout
@@ -31,7 +31,7 @@ jobs:
 
   deploy-task:
     docker:
-      - image: python:3.9-alpine3.11
+      - image: circleci/python
 
     steps:
       - aws-cli/setup
