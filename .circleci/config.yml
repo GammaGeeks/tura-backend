@@ -31,10 +31,15 @@ jobs:
   
   deploy-task:
     docker:
-      - image: cimg/python:3.9  # Compatible CircleCI image with Python (required for AWS CLI setup)
+      - image: cimg/node:18.0  # Node.js image for deployment
     resource_class: small
     steps:
-      - aws-cli/setup            # Initializes AWS CLI using the aws-cli orb
+      - run:
+          name: Install AWS CLI
+          command: |
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            sudo ./aws/install
       - run:
           name: Deploy ECS Task
           command: |
