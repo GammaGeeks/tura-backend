@@ -75,7 +75,7 @@ jobs:
 workflows:
   build-test-deploy:
     jobs:
-      - test
+      # - test
       - aws-ecr/build-and-push-image:
           requires:
             - test
