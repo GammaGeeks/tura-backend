@@ -31,7 +31,8 @@ jobs:
 
   deploy-task:
     docker:
-      - image: cimg/base:2018.01
+      - image: cimg/node:18.0
+    resource_class: small
     steps:
       - checkout
       - aws-cli/setup
