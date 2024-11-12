@@ -1,0 +1,98 @@
+version: 2.1
+
+orbs:
+  aws-ecr: circleci/aws-ecr@8.1
+  aws-cli: circleci/aws-cli@3.1
+
+parameters:
+  aws-access-key-id:
+    type: env_var_name
+    default: AWS_ACCESS_KEY_ID
+  aws-secret-access-key:
+    type: env_var_name
+    default: AWS_SECRET_ACCESS_KEY
+  aws-region:
+    type: env_var_name
+    default: AWS_REGION
+
+jobs:
+  test:
+    docker:
+      - image: cimg/node:18.0
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "package.json" }}
+            - v1-dependencies-
+      - run:
+          name: Install Dependencies
+          command: npm install
+      - save_cache:
+          paths:
+            - node_modules
+          key: v1-dependencies-{{ checksum "package.json" }}
+      - run:
+          name: Run Tests
+          command: npm run test
+      - run:
+          name: Run ESLint
+          command: npm run lint
+
+  deploy-task:
+    docker:
+      - image: cimg/python:3.9
+    steps:
+      - aws-cli/setup
+      - run:
+          name: Deploy ECS Task
+          command: |
+            # Get the latest task definition
+            TASK_DEFINITION=$(aws ecs describe-task-definition \
+              --task-definition ${ECS_TASK_DEFINITION_FAMILY} \
+              --region ${AWS_REGION})
+
+            # Update the image in the task definition
+            NEW_TASK_DEFINITION=$(echo $TASK_DEFINITION | \
+              jq --arg IMAGE "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY_NAME}:${CIRCLE_SHA1}" \
+              '.taskDefinition | .containerDefinitions[0].image = $IMAGE | {
+                family: .family,
+                taskRoleArn: .taskRoleArn,
+                executionRoleArn: .executionRoleArn,
+                networkMode: .networkMode,
+                containerDefinitions: .containerDefinitions,
+                requiresCompatibilities: .requiresCompatibilities,
+                cpu: .cpu,
+                memory: .memory
+              }')
+
+            # Register new task definition
+            NEW_TASK_DEFINITION_ARN=$(aws ecs register-task-definition \
+              --region ${AWS_REGION} \
+              --cli-input-json "$NEW_TASK_DEFINITION" \
+              --query 'taskDefinition.taskDefinitionArn' \
+              --output text)
+
+            # Run the task
+            aws ecs run-task \
+              --cluster ${ECS_CLUSTER_NAME} \
+              --task-definition ${NEW_TASK_DEFINITION_ARN} \
+              --region ${AWS_REGION} \
+              --launch-type FARGATE \
+              --network-configuration "awsvpcConfiguration={subnets=[${SUBNET_ID}],securityGroups=[${SECURITY_GROUP_ID}],assignPublicIp=ENABLED}"
+
+workflows:
+  build-test-deploy:
+    jobs:
+      - test
+      - aws-ecr/build-and-push-image:
+          requires:
+            - test
+          repo: "${ECR_REPOSITORY_NAME}"
+          tag: "${CIRCLE_SHA1},latest"
+          dockerfile: Dockerfile
+          path: .
+          create-repo: true
+      - deploy-task:
+          requires:
+            - aws-ecr/build-and-push-image

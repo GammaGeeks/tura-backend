@@ -1,11 +1,11 @@
 import { Controller, Get, HttpStatus } from '@nestjs/common';
 
-@Controller('welcome')
+@Controller()
 export class WelcomeController {
   @Get()
   getWelcome() {
     return {
-      message: 'Welcome to the application!',
+      message: 'Welcome to TuraAPI app',
       statusCode: HttpStatus.OK,
     };
   }
