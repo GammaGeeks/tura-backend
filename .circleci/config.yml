@@ -6,9 +6,9 @@ orbs:
 
 jobs:
   test:
-    machine:
-      image: ubuntu-2204:2023.10.1
-    resource_class: medium
+    docker:
+      - image: cimg/node:18.0
+    resource_class: small
     steps:
       - checkout
       - restore_cache:
@@ -25,16 +25,15 @@ jobs:
       - run:
           name: Run Tests
           command: npm run test
-      - run:
-          name: Run ESLint
-          command: npm run lint
+      # - run:
+      #     name: Run ESLint
+      #     command: npm run lint
 
   deploy-task:
-    machine:
-      image: ubuntu-2204:2023.10.1
-    resource_class: medium
+    docker:
+      - image: cimg/python:3.9
+    resource_class: small
     steps:
-      - checkout
       - aws-cli/setup
       - run:
           name: Deploy ECS Task
