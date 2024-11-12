@@ -7,8 +7,8 @@ orbs:
 jobs:
   test:
     docker:
-      - image: cimg/node:20.0
-    resource_class: small
+      - image: cimg/node:18.0
+    resource_class: medium
     steps:
       - checkout
       - restore_cache:
@@ -32,7 +32,7 @@ jobs:
   deploy-task:
     docker:
       - image: cimg/python:3.9
-    resource_class: small
+    resource_class: medium
     steps:
       - aws-cli/setup
       - run:
