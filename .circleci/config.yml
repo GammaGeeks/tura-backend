@@ -31,10 +31,11 @@ jobs:
 
   deploy-task:
     docker:
-      - image: amazon/aws-cli:latest
-    resource_class: small
+      - image: cimg/python:3.9  # Python 3.9 image for AWS CLI commands
+    resource_class: small       # Adjust as needed, based on plan limits
     steps:
       - checkout  # Added checkout to ensure we have access to any necessary files
+      - aws-cli/setup
       - run:
           name: Deploy ECS Task
           command: |
