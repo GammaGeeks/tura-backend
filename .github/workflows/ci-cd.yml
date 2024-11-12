@@ -80,18 +80,23 @@ jobs:
       - name: Install jq
         run: sudo apt-get install -y jq
 
-      - name: Stop Running ECS Task
+      - name: Stop Running ECS Tasks
         env:
           AWS_REGION: ${{ secrets.AWS_REGION }}
           ECS_CLUSTER_NAME: ${{ secrets.ECS_CLUSTER_NAME }}
-          ECS_SERVICE_NAME: ${{ secrets.ECS_SERVICE_NAME }}
         run: |
-          # Scale down the service to stop existing tasks
-          aws ecs update-service --cluster $ECS_CLUSTER_NAME --service $ECS_SERVICE_NAME --desired-count 0 --region $AWS_REGION
-
-          # Wait until tasks have stopped
-          aws ecs wait services-stable --cluster $ECS_CLUSTER_NAME --services $ECS_SERVICE_NAME --region $AWS_REGION
-
+          # Get the list of running task ARNs
+          TASK_ARNS=$(aws ecs list-tasks \
+            --cluster $ECS_CLUSTER_NAME \
+            --region $AWS_REGION \
+            --query 'taskArns' \
+            --output text)
+  
+          # Stop each running task
+          for TASK_ARN in $TASK_ARNS; do
+            aws ecs stop-task --cluster $ECS_CLUSTER_NAME --task $TASK_ARN --region $AWS_REGION
+          done
+  
       - name: Deploy to ECS
         env:
           ECS_CLUSTER_NAME: ${{ secrets.ECS_CLUSTER_NAME }}
