@@ -31,13 +31,10 @@ jobs:
   
   deploy-task:
     docker:
-      - image: amazon/aws-cli
+      - image: cimg/python:3.9  # Compatible CircleCI image with Python (required for AWS CLI setup)
+    resource_class: small
     steps:
-      - checkout
-      - run:
-          name: Install git and jq
-          command: |
-            yum install -y git jq
+      - aws-cli/setup            # Initializes AWS CLI using the aws-cli orb
       - run:
           name: Deploy ECS Task
           command: |
