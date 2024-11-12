@@ -31,14 +31,9 @@ jobs:
 
   deploy-task:
     docker:
-      - image: cimg/node:18.0
-    resource_class: small
+      - image: cimg/aws:2024.03
     steps:
       - checkout
-      - aws-cli/setup
-      - run:
-          name: Install jq
-          command: sudo apt-get update && sudo apt-get install -y jq
       - run:
           name: Deploy ECS Task
           command: |
