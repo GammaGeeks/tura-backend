@@ -6,7 +6,6 @@ import { WelcomeController } from './welcome/welcome.controller';
 @Module({
   imports: [PrismaModule],
   providers: [JwtModule],
-  controllers: [WelcomeController]
+  controllers: [WelcomeController],
 })
-
 export class AppModule {}
