@@ -28,12 +28,16 @@ jobs:
       # - run:
       #     name: Run ESLint
       #     command: npm run lint
-
+  
   deploy-task:
     docker:
-      - image: cimg/aws:2024.03
+      - image: amazon/aws-cli
     steps:
       - checkout
+      - run:
+          name: Install git and jq
+          command: |
+            yum install -y git jq
       - run:
           name: Deploy ECS Task
           command: |
@@ -71,6 +75,7 @@ jobs:
               --launch-type FARGATE \
               --network-configuration "awsvpcConfiguration={subnets=[${SUBNET_ID}],securityGroups=[${SECURITY_GROUP_ID}],assignPublicIp=ENABLED}"
 
+  
 workflows:
   build-test-deploy:
     jobs:
