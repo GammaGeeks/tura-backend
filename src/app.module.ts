@@ -8,4 +8,5 @@ import { WelcomeController } from './welcome/welcome.controller';
   providers: [JwtModule],
   controllers: [WelcomeController]
 })
+
 export class AppModule {}
