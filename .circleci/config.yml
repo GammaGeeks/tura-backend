@@ -31,10 +31,9 @@ jobs:
 
   deploy-task:
     docker:
-      - image: cimg/python:3.9    # Updated to use cimg instead of circleci
-    resource_class: small
+      - image: amazon/aws-cli:latest
     steps:
-      - aws-cli/setup
+      - checkout  # Added checkout to ensure we have access to any necessary files
       - run:
           name: Deploy ECS Task
           command: |
@@ -42,6 +41,9 @@ jobs:
             TASK_DEFINITION=$(aws ecs describe-task-definition \
               --task-definition ${ECS_TASK_DEFINITION_FAMILY} \
               --region ${AWS_REGION})
+
+            # Install jq
+            yum install -y jq
 
             # Update the image in the task definition
             NEW_TASK_DEFINITION=$(echo $TASK_DEFINITION | \
