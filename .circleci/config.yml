@@ -9,17 +9,6 @@ jobs:
     machine:
       image: ubuntu-2204:2023.10.1
     resource_class: medium
-    environment:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
-      NODE_ENV: test
-    services:
-      - image: postgres:15
-        environment:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: test_db
-        ports:
-          - 5432:5432
     steps:
       - checkout
       - restore_cache:
@@ -33,22 +22,6 @@ jobs:
           paths:
             - node_modules
           key: v1-dependencies-{{ checksum "package.json" }}
-      - run:
-          name: Wait for Database
-          command: |
-            for i in `seq 1 10`;
-            do
-              nc -z localhost 5432 && echo Success && exit 0
-              echo -n .
-              sleep 1
-            done
-            echo Failed waiting for Postgres && exit 1
-      - run:
-          name: Generate Prisma Client
-          command: npx prisma generate
-      - run:
-          name: Run Database Migrations
-          command: npx prisma migrate deploy
       - run:
           name: Run Tests
           command: npm run test
