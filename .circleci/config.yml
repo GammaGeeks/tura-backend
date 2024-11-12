@@ -32,6 +32,7 @@ jobs:
   deploy-task:
     docker:
       - image: amazon/aws-cli:latest
+    resource_class: small
     steps:
       - checkout  # Added checkout to ensure we have access to any necessary files
       - run:
