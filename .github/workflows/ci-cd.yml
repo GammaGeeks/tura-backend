@@ -44,18 +44,6 @@ jobs:
         run: |
           npx badge-maker --label coverage --message "${{ steps.extract_coverage.outputs.coverage_percentage }}%" --color green > ./coverage/badge.svg
 
-      - name: Commit and push badge
-        run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add ./coverage/badge.svg
-          git commit -m "Update coverage badge" || echo "No changes to commit"
-          git push origin HEAD:$(git rev-parse --abbrev-ref HEAD)
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-
-
       # - name: Run ESLint (uncomment if needed)
       #   run: npm run lint
 
