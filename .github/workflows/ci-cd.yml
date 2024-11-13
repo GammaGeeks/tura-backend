@@ -36,7 +36,7 @@ jobs:
 
       - name: Generate coverage badge
         run: |
-          badge-maker --label coverage --message ${{ steps.coverage.outputs.coverage }} --color green > ./coverage/badge.svg
+          npx badge-maker --label coverage --message ${{ steps.coverage.outputs.coverage }} --color green > ./coverage/badge.svg
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
