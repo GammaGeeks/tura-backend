@@ -34,9 +34,12 @@ jobs:
       - name: Run tests
         run: npm run test:cov
 
+      - name: Coveralls
+        uses: coverallsapp/github-action@v2
+
       # - name: Run ESLint (uncomment if needed)
       #   run: npm run lint
-
+  
   build-and-push:
     needs: test
     runs-on: ubuntu-latest

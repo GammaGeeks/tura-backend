@@ -1,3 +1,6 @@
+[![Maintainability](https://api.codeclimate.com/v1/badges/9f48b8a2e10aae2a23aa/maintainability)](https://codeclimate.com/github/GammaGeeks/tura-backend/maintainability)
+
+[![Coverage Status](https://coveralls.io/repos/github/GammaGeeks/tura-backend/badge.svg?branch=main)](https://coveralls.io/github/GammaGeeks/tura-backend?branch=main)
 
 # Tura Backend
 
