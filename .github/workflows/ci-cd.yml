@@ -42,7 +42,7 @@ jobs:
 
       - name: Generate coverage badge
         run: |
-          badge-maker --label coverage --message "${{ steps.extract_coverage.outputs.coverage_percentage }}%" --color green > ./coverage/badge.svg
+          npx badge-maker --label coverage --message "${{ steps.extract_coverage.outputs.coverage_percentage }}%" --color green > ./coverage/badge.svg
 
       - name: Commit and push badge
         run: |
