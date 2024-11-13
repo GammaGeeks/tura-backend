@@ -1,13 +1,45 @@
-# tura-backend
-Tura is a real estate web application that facilitates users to rent and buy properties online. The backend is built using Node.js and Nest.js, with Prisma as the ORM for database interactions and PostgreSQL. The application allows users to share properties and earn commissions
 
-## Project setup
+# Tura Backend
 
-```bash
-$ npm install
-```
+![Coverage](./coverage/badge.svg)
+Tura is a real estate web application that facilitates users to rent and buy properties online. The backend is built using Node.js and Nest.js, with Prisma as the ORM for database interactions and PostgreSQL. The application allows users to share properties and earn commissions.
 
-## Compile and run the project
+## Project Setup
+
+1. Install dependencies:
+
+    ```bash
+    npm install
+    ```
+
+2. Prisma setup:
+   - Initialize Prisma:
+
+        ```bash
+        npx prisma init
+        ```
+
+   - Database migration:
+
+        ```bash
+        npx prisma migrate dev --name <migration_name>
+        ```
+
+   - Generate Prisma client:
+
+        ```bash
+        npx prisma generate
+        ```
+
+   - Seed database (optional):
+
+        ```bash
+        npx prisma db seed
+        ```
+
+3. Compile and run the project
+
+## Compile and Run the Project
 
 ```bash
 # development
@@ -18,8 +50,6 @@ $ npm run start:dev
 
 # production mode
 $ npm run start:prod
-```
-
 ## Run tests
 
 ```bash
