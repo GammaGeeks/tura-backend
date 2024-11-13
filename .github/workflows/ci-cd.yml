@@ -1,15 +1,16 @@
 name: CI/CD Pipeline
 
+# CI Workflow
 on:
   push:
     branches:
-      - main
-      - initializing-project
+      - '**'  # Trigger on every push to any branch (test job)
   pull_request:
     branches:
-      - main
+      - main  # Trigger on pull requests to the main branch (build, push, deploy)
 
 jobs:
+  # Test Job (runs on every push)
   test:
     runs-on: ubuntu-latest
     steps:
@@ -19,7 +20,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 20
 
       - name: Restore npm cache
         uses: actions/cache@v3
@@ -30,17 +31,19 @@ jobs:
             v1-dependencies-
 
       - name: Install dependencies
-        run: npm install
+        run: yarn install
 
       - name: Run tests
-        run: npm test
+        run: yarn test:cov
 
-      # - name: Run ESLint (uncomment if needed)
-      #   run: npm run lint
+      - name: Coveralls
+        uses: coverallsapp/github-action@v2
 
+  # Build, Push and Deploy Jobs (runs only on pull requests to main)
   build-and-push:
     needs: test
     runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'  # Only runs on PRs to main
     steps:
       - name: Check out code
         uses: actions/checkout@v3
@@ -64,11 +67,10 @@ jobs:
           docker build -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY_NAME:$GITHUB_SHA .
           docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY_NAME:$GITHUB_SHA
 
-
-
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'  # Only runs on PRs to main
     steps:
       - name: Set up AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -96,7 +98,7 @@ jobs:
           for TASK_ARN in $TASK_ARNS; do
             aws ecs stop-task --cluster $ECS_CLUSTER_NAME --task $TASK_ARN --region $AWS_REGION
           done
-  
+
       - name: Deploy to ECS
         env:
           ECS_CLUSTER_NAME: ${{ secrets.ECS_CLUSTER_NAME }}
