@@ -1,6 +1,15 @@
+import { IsEmail, IsNotEmpty, IsString } from "class-validator"
+
 export class registerDto{
-    name: string
+    @IsEmail()
+    @IsNotEmpty()
     email: string
-    profileImg: string
+
+    @IsString()
+    @IsNotEmpty()
     password: string
+
+    @IsString()
+    @IsNotEmpty()
+    name: string
 }
