@@ -34,6 +34,13 @@ jobs:
       - name: Run tests
         run: npm run test:cov
 
+      - name: Generate coverage badge
+        run: |
+          badge-maker --label coverage --message ${{ steps.coverage.outputs.coverage }} --color green > ./coverage/badge.svg
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
       # - name: Run ESLint (uncomment if needed)
       #   run: npm run lint
 
