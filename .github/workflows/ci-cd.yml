@@ -42,6 +42,7 @@ jobs:
   
   build-and-push:
     needs: test
+    if: github.event_name == 'pull_request'  # Ensures this job runs only on pull requests to the main branch
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
@@ -71,6 +72,7 @@ jobs:
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'  # Ensures this job runs only on pull requests to the main branch
     steps:
       - name: Set up AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
