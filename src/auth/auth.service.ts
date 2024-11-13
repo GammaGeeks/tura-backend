@@ -2,10 +2,14 @@ import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/com
 import { PrismaService } from 'src/prisma/prisma.service';
 import * as argon from 'argon2'
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
-    constructor(private prisma: PrismaService){}
+    constructor(
+        private prisma: PrismaService, 
+        private jwt: JwtService
+    ){}
     async login(dto){
         const user = await this.prisma.users.findUnique({
             where: {
@@ -19,7 +23,7 @@ export class AuthService {
         
         if(!pwCheck) throw new ForbiddenException('invalid credentials')
 
-        return 'authenticated !'    
+        return { token: await this.signToken(user.id, user.email) }    
      }
 
     async register(dto){
@@ -32,15 +36,9 @@ export class AuthService {
                 email: dto.email
             }
         })
-        delete user.createdAt
-        delete user.updatedAt
-        delete user.password
-        delete user.id
 
-        return {
-            message: 'user is created successfully',
-            user
-        }
+        return { token: await this.signToken(user.id, user.email) }
+
         } catch (error) {
             if(error instanceof PrismaClientKnownRequestError){
                 if(error.code == 'P2002'){
@@ -48,5 +46,15 @@ export class AuthService {
                 }
             }
         }
+    }
+
+    async signToken(id: number, email: string): Promise<string>{
+        const payload: object={
+            sub: id,
+            email
+        }
+        return this.jwt.signAsync(payload, {
+            secret: process.env.JWT_SECRET
+        })
     }
 }
