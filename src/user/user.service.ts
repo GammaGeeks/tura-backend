@@ -5,7 +5,8 @@ import { PrismaService } from 'src/prisma/prisma.service';
 export class UserService {
     constructor(private prisma: PrismaService){}
 
-    async allUser(){
+    async allUser(payload){
+        console.log(payload)
         return await this.prisma.users.findMany()
     }
 }
