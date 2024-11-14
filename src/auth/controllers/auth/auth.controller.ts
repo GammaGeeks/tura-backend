@@ -7,6 +7,8 @@ import {
   UseGuards,
   Req,
   Res,
+  UsePipes,
+  ValidationPipe,
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
@@ -41,6 +43,7 @@ export class AuthController {
   }
 
   @Post('signup')
+  @UsePipes(ValidationPipe)
   async signup(
     @Body() createUserDto: CreateUserDto,
     @Res() res: Response,
