@@ -7,6 +7,7 @@ import {
   UseGuards,
   Req,
   Res,
+  HttpException,
   HttpStatus,
 } from '@nestjs/common';
 import { Response, Request } from 'express';
@@ -14,10 +15,15 @@ import { AuthService } from 'src/auth/services/auth/auth.service';
 import { LocalGuard } from 'src/guards/local.guard';
 import { JWTAuthGuard } from 'src/guards/jwt.guard';
 import { AuthPayloadDto } from 'src/auth/dtos/auth.dto';
+import { CreateUserDto } from 'src/users/dtos/CreateUser.dto';
+import { UsersService } from 'src/users/services/users/users.service';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private userService: UsersService,
+  ) {}
 
   @Post('login')
   @UseGuards(LocalGuard)
@@ -31,6 +37,30 @@ export class AuthController {
     return res.status(HttpStatus.CREATED).json({
       message: 'Login successful',
       token: req.user,
+    });
+  }
+
+  @Post('signup')
+  async signup(
+    @Body() createUserDto: CreateUserDto,
+    @Res() res: Response,
+    @Req() req: Request,
+  ) {
+    const emailExists = await this.userService.getUserByEmail(
+      createUserDto.email,
+    );
+
+    const usernameExists = await this.userService.getUserByUsername(
+      createUserDto.username,
+    );
+
+    if (emailExists || usernameExists)
+      throw new HttpException('User already exists', HttpStatus.BAD_REQUEST);
+    const user = await this.authService.createUser(createUserDto);
+
+    return res.status(HttpStatus.CREATED).json({
+      message: 'SignUp successful',
+      data: user,
     });
   }
 

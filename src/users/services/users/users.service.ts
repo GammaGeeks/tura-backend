@@ -1,15 +1,17 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Prisma } from '@prisma/client';
+import { encodePassword } from 'src/utils/bcrypt';
 
 @Injectable()
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
-  createUser(data: Prisma.UserCreateInput) {
+  async createUser(data: Prisma.UserCreateInput) {
     return this.prisma.user.create({
       data: {
         ...data,
+        password: await encodePassword(data.password),
         userSetting: {
           create: {
             smsEnabled: true,

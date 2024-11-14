@@ -10,13 +10,16 @@ import {
   ValidationPipe,
   HttpException,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
 import { UsersService } from 'src/users/services/users/users.service';
 import { CreateUserDto } from 'src/users/dtos/CreateUser.dto';
 import { UpdateUserDto } from 'src/users/dtos/UpdateUser.dto';
 import { UpdateUserSettingsDto } from 'src/users/dtos/UpdateUserSettings.dto';
+import { JWTAuthGuard } from 'src/guards/jwt.guard';
 
 @Controller('users')
+@UseGuards(JWTAuthGuard)
 export class UsersController {
   constructor(private userService: UsersService) {}
 
