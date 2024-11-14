@@ -43,7 +43,7 @@ jobs:
   build-and-push:
     needs: test
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'  # Only runs on push to main
+    # if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - name: Check out code
         uses: actions/checkout@v3
@@ -70,7 +70,7 @@ jobs:
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'  # Only runs on push to main
+    # if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - name: Migrate database changes
         run: npx prisma migrate deploy --schema=prisma/schema.prisma
