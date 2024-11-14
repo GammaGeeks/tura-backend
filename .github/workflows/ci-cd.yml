@@ -4,10 +4,10 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
-      - '**'  # Trigger on every push to any branch (test job)
+      - main  # Trigger on every push to any branch (test job)
   pull_request:
     branches:
-      - main  # Trigger on pull requests to the main branch (build, push, deploy)
+      - '**'  # Trigger on pull requests to the main branch (build, push, deploy)
 
 jobs:
   # Test Job (runs on every push)
@@ -43,7 +43,7 @@ jobs:
   build-and-push:
     needs: test
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'  # Only runs on PRs to main
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'  # Only runs on push to main
     steps:
       - name: Check out code
         uses: actions/checkout@v3
@@ -70,7 +70,7 @@ jobs:
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'  # Only runs on PRs to main
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'  # Only runs on push to main
     steps:
       - name: Set up AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
