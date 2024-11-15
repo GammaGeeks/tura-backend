@@ -87,17 +87,57 @@ jobs:
           AWS_REGION: ${{ secrets.AWS_REGION }}
           ECS_CLUSTER_NAME: ${{ secrets.ECS_CLUSTER_NAME }}
         run: |
+          # Check if cluster exists
+          if ! aws ecs describe-clusters --clusters $ECS_CLUSTER_NAME --region $AWS_REGION --query 'clusters[0].clusterArn' --output text > /dev/null 2>&1; then
+            echo "Cluster $ECS_CLUSTER_NAME not found"
+            exit 0
+          fi
+      
           # Get the list of running task ARNs
           TASK_ARNS=$(aws ecs list-tasks \
             --cluster $ECS_CLUSTER_NAME \
+            --desired-status RUNNING \
             --region $AWS_REGION \
             --query 'taskArns' \
             --output text)
-  
+      
+          # Check if there are any running tasks
+          if [ "$TASK_ARNS" = "None" ] || [ -z "$TASK_ARNS" ]; then
+            echo "No running tasks found in cluster $ECS_CLUSTER_NAME"
+            exit 0
+          fi
+      
+          echo "Stopping tasks in cluster $ECS_CLUSTER_NAME"
+          
           # Stop each running task
           for TASK_ARN in $TASK_ARNS; do
-            aws ecs stop-task --cluster $ECS_CLUSTER_NAME --task $TASK_ARN --region $AWS_REGION
+            echo "Stopping task: $TASK_ARN"
+            if aws ecs stop-task --cluster $ECS_CLUSTER_NAME --task $TASK_ARN --region $AWS_REGION; then
+              echo "Successfully stopped task: $TASK_ARN"
+            else
+              echo "Failed to stop task: $TASK_ARN"
+            fi
           done
+      
+          # Wait for tasks to stop
+          echo "Waiting for tasks to stop..."
+          sleep 30
+      
+          # Verify all tasks are stopped
+          RUNNING_TASKS=$(aws ecs list-tasks \
+            --cluster $ECS_CLUSTER_NAME \
+            --desired-status RUNNING \
+            --region $AWS_REGION \
+            --query 'length(taskArns)' \
+            --output text)
+      
+          if [ "$RUNNING_TASKS" = "0" ]; then
+            echo "All tasks successfully stopped"
+          else
+            echo "Warning: $RUNNING_TASKS tasks are still running"
+            exit 1
+          fi
+      
       - name: Deploy to ECS
         env:
           ECS_CLUSTER_NAME: ${{ secrets.ECS_CLUSTER_NAME }}
