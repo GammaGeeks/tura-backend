@@ -98,7 +98,6 @@ jobs:
           for TASK_ARN in $TASK_ARNS; do
             aws ecs stop-task --cluster $ECS_CLUSTER_NAME --task $TASK_ARN --region $AWS_REGION
           done
-
       - name: Deploy to ECS
         env:
           ECS_CLUSTER_NAME: ${{ secrets.ECS_CLUSTER_NAME }}
@@ -115,10 +114,9 @@ jobs:
             --task-definition $ECS_TASK_DEFINITION_FAMILY \
             --region $AWS_REGION)
 
-          # Update the image and add load balancer configuration in the task definition
+          # Update the image and container configuration in the task definition
           NEW_TASK_DEFINITION=$(echo $TASK_DEFINITION | \
             jq --arg IMAGE "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY_NAME:$GITHUB_SHA" \
-            --arg TG_ARN "$TARGET_GROUP_ARN" \
             --arg CONTAINER_NAME "$ECR_REPOSITORY_NAME" \
             --arg CONTAINER_PORT "$CONTAINER_PORT" \
             '.taskDefinition | .containerDefinitions[0].image = $IMAGE | 
@@ -127,11 +125,6 @@ jobs:
               "containerPort": ($CONTAINER_PORT | tonumber),
               "hostPort": ($CONTAINER_PORT | tonumber),
               "protocol": "tcp"
-            }] |
-            .loadBalancers = [{
-              "targetGroupArn": $TG_ARN,
-              "containerName": $CONTAINER_NAME,
-              "containerPort": ($CONTAINER_PORT | tonumber)
             }] | {
               family: .family,
               taskRoleArn: .taskRoleArn,
@@ -140,8 +133,7 @@ jobs:
               containerDefinitions: .containerDefinitions,
               requiresCompatibilities: .requiresCompatibilities,
               cpu: .cpu,
-              memory: .memory,
-              loadBalancers: .loadBalancers
+              memory: .memory
             }')
 
           # Register new task definition
@@ -151,28 +143,30 @@ jobs:
             --query 'taskDefinition.taskDefinitionArn' \
             --output text)
 
-          # Run the task with load balancer configuration
-          aws ecs run-task \
-            --cluster $ECS_CLUSTER_NAME \
-            --task-definition $NEW_TASK_DEFINITION_ARN \
-            --region $AWS_REGION \
-            --launch-type FARGATE \
-            --network-configuration "awsvpcConfiguration={subnets=[$SUBNET_ID],securityGroups=[$SECURITY_GROUP_ID],assignPublicIp=ENABLED}" \
-            --load-balancers "targetGroupArn=$TARGET_GROUP_ARN,containerName=$ECR_REPOSITORY_NAME,containerPort=$CONTAINER_PORT"
+          # Check if the service exists
+          SERVICE_NAME="${ECS_TASK_DEFINITION_FAMILY}-service"
+          if aws ecs describe-services --cluster $ECS_CLUSTER_NAME --services $SERVICE_NAME --region $AWS_REGION | grep -q "MISSING"; then
+            # Create the service if it doesn't exist
+            aws ecs create-service \
+              --cluster $ECS_CLUSTER_NAME \
+              --service-name $SERVICE_NAME \
+              --task-definition $NEW_TASK_DEFINITION_ARN \
+              --desired-count 1 \
+              --launch-type FARGATE \
+              --network-configuration "awsvpcConfiguration={subnets=[$SUBNET_ID],securityGroups=[$SECURITY_GROUP_ID],assignPublicIp=ENABLED}" \
+              --load-balancers "targetGroupArn=$TARGET_GROUP_ARN,containerName=$ECR_REPOSITORY_NAME,containerPort=$CONTAINER_PORT" \
+              --region $AWS_REGION
+          else
+            # Update the existing service
+            aws ecs update-service \
+              --cluster $ECS_CLUSTER_NAME \
+              --service $SERVICE_NAME \
+              --task-definition $NEW_TASK_DEFINITION_ARN \
+              --region $AWS_REGION
+          fi
 
-          # Wait for the task to start
-          sleep 30
-
-          # Get the task ARN
-          TASK_ARN=$(aws ecs list-tasks \
+          # Wait for the service to stabilize
+          aws ecs wait services-stable \
             --cluster $ECS_CLUSTER_NAME \
-            --family $ECS_TASK_DEFINITION_FAMILY \
-            --region $AWS_REGION \
-            --query 'taskArns[0]' \
-            --output text)
-
-          # Wait for the task to be running
-          aws ecs wait tasks-running \
-            --cluster $ECS_CLUSTER_NAME \
-            --tasks $TASK_ARN \
+            --services $SERVICE_NAME \
             --region $AWS_REGION
