@@ -121,7 +121,8 @@ export class AuthController {
       return res.status(HttpStatus.OK).json({
         message: 'Email verified successfully.',
       });
-    } catch (error) {
+    } catch (err) {
+      console.log(err);
       throw new HttpException(
         'Invalid or expired token',
         HttpStatus.BAD_REQUEST,
