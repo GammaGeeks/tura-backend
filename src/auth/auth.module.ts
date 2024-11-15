@@ -7,11 +7,13 @@ import { AuthService } from './services/auth/auth.service';
 import { AuthController } from './controllers/auth/auth.controller';
 import { LocalStrategy } from 'src/strategies/local.strategy';
 import { JWTStrategy } from 'src/strategies/jwt.strategy';
+import { MailModule } from 'src/mail/mail.module';
 
 @Module({
   imports: [
     PassportModule,
     UsersModule,
+    MailModule,
     ConfigModule.forRoot(), // Make sure this is also in your AppModule
     JwtModule.registerAsync({
       imports: [ConfigModule],

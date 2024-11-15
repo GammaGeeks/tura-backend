@@ -4,9 +4,10 @@ import { WelcomeController } from './welcome/welcome.controller';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { AuthService } from './auth/services/auth/auth.service';
+import { MailModule } from './mail/mail.module';
 
 @Module({
-  imports: [AuthModule, UsersModule],
+  imports: [AuthModule, UsersModule, MailModule],
   providers: [JwtService, AuthService],
   controllers: [WelcomeController],
 })
