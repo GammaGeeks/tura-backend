@@ -119,10 +119,6 @@ jobs:
             fi
           done
       
-          # Wait for tasks to stop
-          echo "Waiting for tasks to stop..."
-          sleep 30
-      
           # Verify all tasks are stopped
           RUNNING_TASKS=$(aws ecs list-tasks \
             --cluster $ECS_CLUSTER_NAME \
