@@ -109,6 +109,9 @@ jobs:
           TARGET_GROUP_ARN: ${{ secrets.TARGET_GROUP_ARN }}
           CONTAINER_PORT: "3000"
         run: |
+          # Sanitize container name (replace invalid characters with hyphens)
+          CONTAINER_NAME=$(echo "$ECR_REPOSITORY_NAME" | sed 's/[^a-zA-Z0-9_-]/-/g')
+
           # Get the latest task definition
           TASK_DEFINITION=$(aws ecs describe-task-definition \
             --task-definition $ECS_TASK_DEFINITION_FAMILY \
@@ -117,7 +120,7 @@ jobs:
           # Update the image and container configuration in the task definition
           NEW_TASK_DEFINITION=$(echo $TASK_DEFINITION | \
             jq --arg IMAGE "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY_NAME:$GITHUB_SHA" \
-            --arg CONTAINER_NAME "$ECR_REPOSITORY_NAME" \
+            --arg CONTAINER_NAME "$CONTAINER_NAME" \
             --arg CONTAINER_PORT "$CONTAINER_PORT" \
             '.taskDefinition | .containerDefinitions[0].image = $IMAGE | 
             .containerDefinitions[0].name = $CONTAINER_NAME |
@@ -154,7 +157,7 @@ jobs:
               --desired-count 1 \
               --launch-type FARGATE \
               --network-configuration "awsvpcConfiguration={subnets=[$SUBNET_ID],securityGroups=[$SECURITY_GROUP_ID],assignPublicIp=ENABLED}" \
-              --load-balancers "targetGroupArn=$TARGET_GROUP_ARN,containerName=$ECR_REPOSITORY_NAME,containerPort=$CONTAINER_PORT" \
+              --load-balancers "targetGroupArn=$TARGET_GROUP_ARN,containerName=$CONTAINER_NAME,containerPort=$CONTAINER_PORT" \
               --region $AWS_REGION
           else
             # Update the existing service
