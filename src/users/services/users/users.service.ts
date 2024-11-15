@@ -94,7 +94,7 @@ export class UsersService {
       throw new HttpException('User not found', HttpStatus.BAD_REQUEST);
     const id: number = findUser?.id;
     console.log('ID', id);
-    return this.prisma.user.delete({ where: { id } });
+    return this.prisma.user.delete({ where: { username } });
   }
 
   async updateUserSettings(
@@ -113,6 +113,13 @@ export class UsersService {
     return this.prisma.userSetting.update({
       where: { userId: id },
       data,
+    });
+  }
+
+  activateUser(username: string) {
+    return this.prisma.user.update({
+      where: { username },
+      data: { isVerified: true },
     });
   }
 }

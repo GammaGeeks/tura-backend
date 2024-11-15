@@ -11,6 +11,7 @@ import {
   HttpException,
   HttpStatus,
   UseGuards,
+  HttpCode,
 } from '@nestjs/common';
 import { UsersService } from 'src/users/services/users/users.service';
 import { CreateUserDto } from 'src/users/dtos/CreateUser.dto';
@@ -25,6 +26,7 @@ export class UsersController {
 
   @Post()
   @UsePipes(ValidationPipe)
+  @HttpCode(HttpStatus.CREATED)
   async createUser(@Body() createUserDto: CreateUserDto) {
     const emailExists = await this.userService.getUserByEmail(
       createUserDto.email,
@@ -37,23 +39,35 @@ export class UsersController {
     if (emailExists || usernameExists)
       throw new HttpException('User already exists', HttpStatus.BAD_REQUEST);
 
-    return this.userService.createUser({
+    const user = await this.userService.createUser({
       ...createUserDto,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
+
+    return {
+      message: 'User successfully created',
+      data: user,
+    };
   }
 
   @Get()
-  getUsers() {
-    return this.userService.getUsers();
+  async getUsers() {
+    const users = await this.userService.getUsers();
+    return {
+      message: 'Users successfully fetched',
+      data: users,
+    };
   }
 
   @Get(':username')
   async getUserByUsername(@Param('username') username: string) {
     const user = await this.userService.getUserByUsername(username);
     if (!user) throw new HttpException('User Not Found', HttpStatus.NOT_FOUND);
-    return user;
+    return {
+      message: 'User successfully fetched',
+      data: user,
+    };
   }
 
   @Patch(':username')
