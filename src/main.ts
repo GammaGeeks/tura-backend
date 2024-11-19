@@ -5,8 +5,8 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const allowedOrigins = [
     '*',
-    'http://localhost:3000', // Development
-    'https://your-frontend-domain.com', // Production
+    'http://localhost:5173', // Development
+    'https://main.d5fw14mc1awgo.amplifyapp.com/', // Production
   ];
 
   app.enableCors({
