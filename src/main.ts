@@ -7,7 +7,7 @@ async function bootstrap() {
   app.enableCors({
     origin: 'https://main.d5fw14mc1awgo.amplifyapp.com', // specify the frontend domain or '*' (not recommended for production)
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'xyz'],
     credentials: true, // Allow credentials (cookies, authorization headers, etc.)
   });
 
