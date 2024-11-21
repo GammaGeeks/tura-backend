@@ -40,10 +40,14 @@ export class AuthController {
     @Req() req: Request,
   ) {
     // const user = this.authService.validateUser(authPayload);
-
+    const { token, data } = req.user as {
+      token: string;
+      data: object;
+    };
     return res.status(HttpStatus.CREATED).json({
       message: 'Login successful',
-      token: req.user,
+      token,
+      data,
     });
   }
 
@@ -72,7 +76,7 @@ export class AuthController {
     await this.mailService.sendVerificationEmail(createUserDto.email, token);
 
     return res.status(HttpStatus.CREATED).json({
-      message: 'SignUp successful',
+      message: 'SignUp successful, please check your email for verification',
       data: user,
       token,
     });

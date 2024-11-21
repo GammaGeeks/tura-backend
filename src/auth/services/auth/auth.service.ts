@@ -21,7 +21,13 @@ export class AuthService {
     if (matched) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password, ...user } = findUser;
-      return this.jwtService.sign(user, { secret: process.env.JWT_SECRET });
+      const token = this.jwtService.sign(user, {
+        secret: process.env.JWT_SECRET,
+      });
+      return {
+        token,
+        data: user,
+      };
     }
   }
 
