@@ -17,8 +17,10 @@ import { Response, Request } from 'express';
 import { AuthService } from 'src/auth/services/auth/auth.service';
 import { LocalGuard } from 'src/guards/local.guard';
 import { JWTAuthGuard } from 'src/guards/jwt.guard';
+import { GoogleAuthGuard } from 'src/guards/google-auth.guard';
 import { AuthPayloadDto } from 'src/auth/dtos/auth.dto';
 import { CreateUserDto } from 'src/users/dtos/CreateUser.dto';
+import { GoogleAuthDto } from 'src/auth/dtos/auth.dto';
 import { UsersService } from 'src/users/services/users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { MailService } from 'src/mail/services/mail/mail.service';
@@ -132,5 +134,11 @@ export class AuthController {
         HttpStatus.BAD_REQUEST,
       );
     }
+  }
+
+  @Post('google')
+  @UseGuards(GoogleAuthGuard)
+  async googleLogin(@Req() req, @Body() googleAuthDto: GoogleAuthDto) {
+    return this.authService.googleLogin(req.user);
   }
 }
