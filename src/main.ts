@@ -5,7 +5,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({
-    origin: 'https://main.d5fw14mc1awgo.amplifyapp.com/', // specify the frontend domain or '*' (not recommended for production)
+    origin: 'https://main.d5fw14mc1awgo.amplifyapp.com', // specify the frontend domain or '*' (not recommended for production)
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: [
       'Content-Type',
