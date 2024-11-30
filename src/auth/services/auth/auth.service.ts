@@ -58,7 +58,7 @@ export class AuthService {
         phoneNumber: user.phone,
         profileImg: user.picture,
         coverImg: null,
-        password: null,
+        password: '',
         role: 'CLIENT',
         isVerified: true,
         createdAt: new Date(),
