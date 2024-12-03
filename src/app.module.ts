@@ -5,9 +5,10 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { AuthService } from './auth/services/auth/auth.service';
 import { MailModule } from './mail/mail.module';
+import { PropertyModule } from './property/property.module';
 
 @Module({
-  imports: [AuthModule, UsersModule, MailModule],
+  imports: [AuthModule, UsersModule, MailModule, PropertyModule],
   providers: [JwtService, AuthService],
   controllers: [WelcomeController],
 })
