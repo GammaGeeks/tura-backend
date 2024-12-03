@@ -1,4 +1,11 @@
-import { Controller } from '@nestjs/common';
+import { Controller, Get } from '@nestjs/common';
+import { PropertyService } from './property.service';
 
 @Controller('property')
-export class PropertyController {}
+export class PropertyController {
+    constructor(private propertyService: PropertyService){}
+    @Get()
+    async allProperties(){
+        return this.propertyService.getAll()
+    }
+}
