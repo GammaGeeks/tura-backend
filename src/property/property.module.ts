@@ -7,4 +7,3 @@ import { PropertyService } from './property.service';
   providers: [PropertyService]
 })
 export class PropertyModule {}
-
