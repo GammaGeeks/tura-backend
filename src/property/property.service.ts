@@ -5,6 +5,10 @@ import { PrismaService } from 'src/prisma/prisma.service';
 export class PropertyService {
     constructor( private prisma: PrismaService){}
     async getAll(){
-        return await this.prisma.property.findMany()
+        const property:object[] = await this.prisma.property.findMany()
+        return {
+            message: "properties found",
+            property
+        }
     }
 }
