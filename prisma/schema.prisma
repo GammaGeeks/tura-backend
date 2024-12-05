@@ -29,7 +29,10 @@ model User {
   isVerified Boolean?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
-  userSetting UserSetting? 
+  userSetting UserSetting?
+  properties Property[]
+  sharesSent  Share[]  @relation("SenderRelation")
+  sharesReceived Share[] @relation("RecipientRelation")
   // cars Car[]
   // garages UserOnGarages[]
 }
@@ -40,4 +43,104 @@ model UserSetting {
   smsEnabled Boolean
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId Int @unique
+}
+
+model Property {
+  id Int @id @default(autoincrement())
+  userId Int
+  owner User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title String?
+  imageUrls String[] @default([])
+  slug String?
+  details String?
+  price Int?
+  categorId Int?
+  category Category? @relation(fields: [categorId], references: [id], onDelete: Cascade)
+  size Int?
+  hasParking Boolean?
+  isForSale Boolean?
+  isForRent Boolean?
+  placeId Int?
+  place Place? @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  bedrooms Int?
+  bathrooms Int?
+  isSold Boolean @default(false)
+  hasPool Boolean?
+  appliances String[] @default([])
+  yearBuilt DateTime?
+  AC Boolean?
+  YTUrl String?
+  shares Share[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Category {
+  id Int @id @default(autoincrement())
+  name String @unique
+  details String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  properties Property[]
+}
+
+model Place {
+  id Int @id @default(autoincrement())
+  name String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  province Province @relation(fields: [provinceId], references: [id], onDelete: Cascade)
+  provinceId Int
+  district District @relation(fields: [districtId], references: [id], onDelete: Cascade)
+  districtId Int
+  sector Sector @relation(fields: [sectorId], references: [id], onDelete: Cascade)
+  sectorId Int
+  properties Property[]
+}
+
+model Province {
+  id Int @id @default(autoincrement())
+  name String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  places Place[]
+  districts District[]
+  sectors Sector[]
+}
+
+model District {
+  id Int @id @default(autoincrement())
+  name String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  province Province @relation(fields: [provinceId], references: [id], onDelete: Cascade)
+  provinceId Int
+  sectors Sector[]
+  places Place[]
+}
+
+model Sector {
+  id Int @id @default(autoincrement())
+  name String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  province Province @relation(fields: [provinceId], references: [id], onDelete: Cascade)
+  provinceId Int
+  district District @relation(fields: [districtId], references: [id], onDelete: Cascade)
+  districtId Int
+  places Place[]
+}
+
+model Share {
+  id Int @id @default(autoincrement())
+  propertyId Int
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  senderId Int
+  sender User @relation("SenderRelation", fields: [senderId], references: [id], onDelete: Cascade)
+  recipientId Int?
+  recipient User? @relation("RecipientRelation", fields: [recipientId], references: [id], onDelete: Cascade)
+  parentShareId Int?
+  parentShare Share? @relation("ParentShare", fields: [parentShareId], references: [id], onDelete: Cascade)
+  childShares Share[] @relation("ParentShare")
+  createdAt DateTime @default(now())
 }
