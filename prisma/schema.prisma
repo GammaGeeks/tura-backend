@@ -6,6 +6,7 @@
 
 generator client {
   provider = "prisma-client-js"
+  seed     = "ts-node prisma/seed.ts"
 }
 
 datasource db {
@@ -14,125 +15,128 @@ datasource db {
 }
 
 model User {
-  id Int @id @default(autoincrement())
-  fullname String?
-  username String @unique
-  email String @unique
-  gender String?
-  address String?
-  dob DateTime?
+  id          Int          @id @default(autoincrement())
+  fullname    String?
+  username    String       @unique
+  email       String       @unique
+  gender      String?
+  address     String?
+  dob         DateTime?
   phoneNumber String?
-  profileImg String?
-  coverImg String?
-  password String
-  role String @default("CLIENT")
-  isVerified Boolean?
-  property Property[] // referencing properties
-  sender Share[] @relation("senderRelation") // referencing shares - sender
-  parent Share[] @relation("parentRelation") // referencing shares - parent
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  userSetting UserSetting? 
+  profileImg  String?
+  coverImg    String?
+  password    String
+  role        String       @default("CLIENT")
+  isVerified  Boolean?
+  property    Property[] // referencing properties
+  sender      Share[]      @relation("senderRelation") // referencing shares - sender
+  parent      Share[]      @relation("parentRelation") // referencing shares - parent
+  blog        Blog[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  userSetting UserSetting?
   // cars Car[]
   // garages UserOnGarages[]
 }
 
 model UserSetting {
-  id Int @default(autoincrement()) @id
+  id              Int     @id @default(autoincrement())
   notificationsOn Boolean
-  smsEnabled Boolean
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId Int @unique
+  smsEnabled      Boolean
+  user            User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          Int     @unique
 }
 
 model Property {
-  id Int @default(autoincrement()) @id
-  title String
+  id          Int      @id @default(autoincrement())
+  title       String
   description String
-  imageIds String[]
-  price Int?
-  size Int?
-  hasParking Boolean
-  share Share[]
-  info info
-  hasPlot Boolean
-  userId Int // referencing user
-  user User @relation(fields: [userId],references: [id]) 
-  
+  imageIds    String[]
+  price       Int?
+  size        Int?
+  hasParking  Boolean
+  share       Share[]
+  info        info
+  hasPlot     Boolean
+  userId      Int // referencing user
+  user        User     @relation(fields: [userId], references: [id])
+
   categoryId Int // referencing user
-  category Category @relation(fields: [categoryId], references: [id])
+  category   Category @relation(fields: [categoryId], references: [id])
 
   location Int // referencing place
-  place Place @relation(fields: [id], references: [id])
+  place    Place @relation(fields: [id], references: [id])
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Blog {
-  id Int @default(autoincrement()) @id
-  title String
-  content String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String
+  userId    Int
+  user      User    @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Category {
-  id Int @default(autoincrement()) @id
-  name String
+  id       Int        @id @default(autoincrement())
+  name     String
   property Property[]
 }
 
 model Place {
-  id Int @default(autoincrement()) @id
+  id       Int        @id @default(autoincrement())
   property Property[] // referencing property
 
   provinceId Int
-  province Province @relation(fields: [provinceId], references: [id])
+  province   Province? @relation(fields: [provinceId], references: [id])
 
   districtId Int
-  district District @relation(fields: [districtId], references: [id])
+  district   District? @relation(fields: [districtId], references: [id])
 
-  sectorId Int
-  sector Sector @relation(fields: [sectorId], references: [id])
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  sectorId  Int
+  sector    Sector?  @relation(fields: [sectorId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Province {
-  id Int @default(autoincrement()) @id
-  name String
-  places Int
-  place Place[]
+  id     Int     @id @default(autoincrement())
+  name   String
+  places Int?
+  place  Place[]
 }
 
 model District {
-  id Int @default(autoincrement()) @id
-  name String
-  places Int
-  place Place[]
+  id     Int     @id @default(autoincrement())
+  name   String
+  places Int?
+  place  Place[]
 }
 
 model Sector {
-  id Int @default(autoincrement()) @id
-  name String
-  places Int
-  place Place[]
+  id     Int     @id @default(autoincrement())
+  name   String
+  places Int?
+  place  Place[]
 }
 
 model Share {
-  id Int @default(autoincrement()) @id
-  senderId Int
-  sender User? @relation("senderRelation",fields: [senderId], references: [id])
+  id       Int   @id @default(autoincrement())
+  senderId Int?
+  sender   User? @relation("senderRelation", fields: [senderId], references: [id])
 
   parentId Int
-  parent User? @relation("parentRelation",fields: [parentId], references: [id])
+  parent   User? @relation("parentRelation", fields: [parentId], references: [id])
 
   propertyId Int
-  property Property @relation(fields: [propertyId], references: [id])
+  property   Property @relation(fields: [propertyId], references: [id])
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum info {
