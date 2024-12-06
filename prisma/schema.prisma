@@ -90,10 +90,6 @@ model Place {
   name String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  province Province @relation(fields: [provinceId], references: [id], onDelete: Cascade)
-  provinceId Int
-  district District @relation(fields: [districtId], references: [id], onDelete: Cascade)
-  districtId Int
   sector Sector @relation(fields: [sectorId], references: [id], onDelete: Cascade)
   sectorId Int
   properties Property[]
@@ -104,9 +100,7 @@ model Province {
   name String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  places Place[]
   districts District[]
-  sectors Sector[]
 }
 
 model District {
@@ -117,7 +111,6 @@ model District {
   province Province @relation(fields: [provinceId], references: [id], onDelete: Cascade)
   provinceId Int
   sectors Sector[]
-  places Place[]
 }
 
 model Sector {
@@ -125,8 +118,6 @@ model Sector {
   name String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  province Province @relation(fields: [provinceId], references: [id], onDelete: Cascade)
-  provinceId Int
   district District @relation(fields: [districtId], references: [id], onDelete: Cascade)
   districtId Int
   places Place[]
