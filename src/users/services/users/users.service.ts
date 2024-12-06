@@ -2,10 +2,14 @@ import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import { encodePassword } from 'src/utils/bcrypt';
+import { S3Service } from 'src/s3/services/s3.service';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private s3Service: S3Service,
+  ) {}
 
   async createUser(data: Prisma.UserCreateInput) {
     return this.prisma.user.create({
@@ -121,5 +125,22 @@ export class UsersService {
       where: { username },
       data: { isVerified: true },
     });
+  }
+
+  async uploadProfilePicture(
+    file: Express.Multer.File,
+    username: string,
+  ): Promise<string> {
+    const folder = `users/${username}`;
+    const key = await this.s3Service.uploadFile(file, folder);
+
+    const url = await this.s3Service.generateSignedUrl(key);
+
+    await this.prisma.user.update({
+      where: { username },
+      data: { profileImg: url },
+    });
+
+    return url;
   }
 }

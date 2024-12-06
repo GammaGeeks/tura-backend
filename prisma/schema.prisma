@@ -33,7 +33,7 @@ model User {
   properties Property[]
   sharesSent  Share[]  @relation("SenderRelation")
   sharesReceived Share[] @relation("RecipientRelation")
-  // cars Car[]
+  blogs Blog[]
   // garages UserOnGarages[]
 }
 
@@ -51,7 +51,7 @@ model Property {
   owner User @relation(fields: [userId], references: [id], onDelete: Cascade)
   title String?
   imageUrls String[] @default([])
-  slug String?
+  slug String? @unique
   details String?
   price Int?
   categorId Int?
@@ -82,6 +82,7 @@ model Category {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   properties Property[]
+  blogs Blog[]
 }
 
 model Place {
@@ -143,4 +144,18 @@ model Share {
   parentShare Share? @relation("ParentShare", fields: [parentShareId], references: [id], onDelete: Cascade)
   childShares Share[] @relation("ParentShare")
   createdAt DateTime @default(now())
+}
+
+model Blog {
+  id Int @id @default(autoincrement())
+  title String?
+  content String?
+  authorId Int
+  categoryId Int?
+  featuredImg String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  slug String?
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  category Category? @relation(fields: [categoryId], references: [id])
 }

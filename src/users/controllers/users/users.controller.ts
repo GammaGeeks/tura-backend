@@ -12,7 +12,11 @@ import {
   HttpStatus,
   UseGuards,
   HttpCode,
+  UploadedFile,
+  UseInterceptors,
+  BadRequestException,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { UsersService } from 'src/users/services/users/users.service';
 import { CreateUserDto } from 'src/users/dtos/CreateUser.dto';
 import { UpdateUserDto } from 'src/users/dtos/UpdateUser.dto';
@@ -89,5 +93,25 @@ export class UsersController {
     @Body() updateUserSettingsDto: UpdateUserSettingsDto,
   ) {
     return this.userService.updateUserSettings(username, updateUserSettingsDto);
+  }
+
+  @Post(':username/upload')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: 5 * 1024 * 1024 }, // Limit to 5MB
+    }),
+  )
+  async uploadProfileImg(
+    @Param('username') username: string,
+    @UploadedFile() file: Express.Multer.File, // Correctly receive the file
+  ) {
+    if (!file) {
+      throw new BadRequestException('No file provided.');
+    }
+
+    return {
+      message: 'Image successfully uploaded',
+      data: await this.userService.uploadProfilePicture(file, username),
+    };
   }
 }
