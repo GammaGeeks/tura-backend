@@ -1,16 +1,15 @@
 name: CI/CD Pipeline
 
-# CI Workflow
 on:
   push:
     branches:
-      - main  # Trigger on every push to any branch (test job)
+      - main  # Trigger on push to main branch
   pull_request:
     branches:
-      - '**'  # Trigger on pull requests to the main branch (build, push, deploy)
+      - '**'  # Trigger on pull requests to any branch
 
 jobs:
-  # Test Job (runs on every push)
+  # Test Job
   test:
     runs-on: ubuntu-latest
     steps:
@@ -36,14 +35,14 @@ jobs:
       - name: Run tests
         run: npm run test:cov
 
-      - name: Coveralls
+      - name: Upload Coverage to Coveralls
         uses: coverallsapp/github-action@v2
 
-  # Build, Push and Deploy Jobs (runs only on pull requests to main)
+  # Build and Push Job
   build-and-push:
     needs: test
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'  # Only runs on push to main
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - name: Check out code
         uses: actions/checkout@v3
@@ -58,19 +57,22 @@ jobs:
             --username AWS \
             --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
 
-      - name: Build, tag, and push image to ECR
+      - name: Build, Tag, and Push Docker Image
         env:
           AWS_REGION: ${{ secrets.AWS_REGION }}
           ECR_REPOSITORY_NAME: ${{ secrets.ECR_REPOSITORY_NAME }}
           AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
         run: |
-          docker build -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY_NAME:$GITHUB_SHA .
-          docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY_NAME:$GITHUB_SHA
+          IMAGE_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY_NAME:$GITHUB_SHA
+          docker build -t $IMAGE_URI .
+          docker push $IMAGE_URI
+          echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_ENV
 
+  # Deploy Job
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'  # Only runs on push to main
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - name: Set up AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -80,100 +82,48 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Install jq
-        run: sudo apt-get install -y jq
+        run: sudo apt-get update && sudo apt-get install -y jq
 
       - name: Stop Running ECS Tasks
         env:
           AWS_REGION: ${{ secrets.AWS_REGION }}
           ECS_CLUSTER_NAME: ${{ secrets.ECS_CLUSTER_NAME }}
         run: |
-          # Check if cluster exists
-          if ! aws ecs describe-clusters --clusters $ECS_CLUSTER_NAME --region $AWS_REGION --query 'clusters[0].clusterArn' --output text > /dev/null 2>&1; then
-            echo "Cluster $ECS_CLUSTER_NAME not found"
-            exit 0
-          fi
-      
-          # Get the list of running task ARNs
-          TASK_ARNS=$(aws ecs list-tasks \
-            --cluster $ECS_CLUSTER_NAME \
-            --desired-status RUNNING \
-            --region $AWS_REGION \
-            --query 'taskArns' \
-            --output text)
-      
-          # Check if there are any running tasks
-          if [ "$TASK_ARNS" = "None" ] || [ -z "$TASK_ARNS" ]; then
-            echo "No running tasks found in cluster $ECS_CLUSTER_NAME"
-            exit 0
-          fi
-      
-          echo "Stopping tasks in cluster $ECS_CLUSTER_NAME"
-          
-          # Stop each running task
-          for TASK_ARN in $TASK_ARNS; do
-            echo "Stopping task: $TASK_ARN"
-            if aws ecs stop-task --cluster $ECS_CLUSTER_NAME --task $TASK_ARN --region $AWS_REGION; then
-              echo "Successfully stopped task: $TASK_ARN"
-            else
-              echo "Failed to stop task: $TASK_ARN"
-            fi
-          done
-      
-          # Verify all tasks are stopped
-          RUNNING_TASKS=$(aws ecs list-tasks \
-            --cluster $ECS_CLUSTER_NAME \
-            --desired-status RUNNING \
-            --region $AWS_REGION \
-            --query 'length(taskArns)' \
-            --output text)
-      
-          if [ "$RUNNING_TASKS" = "0" ]; then
-            echo "All tasks successfully stopped"
+          TASK_ARNS=$(aws ecs list-tasks --cluster $ECS_CLUSTER_NAME --desired-status RUNNING --region $AWS_REGION --query 'taskArns' --output text)
+          if [ -z "$TASK_ARNS" ]; then
+            echo "No tasks to stop."
           else
-            echo "Warning: $RUNNING_TASKS tasks are still running"
-            exit 1
+            for TASK_ARN in $TASK_ARNS; do
+              aws ecs stop-task --cluster $ECS_CLUSTER_NAME --task $TASK_ARN --region $AWS_REGION
+            done
           fi
-      
-      - name: Deploy to ECS
+
+      - name: Deploy New Task Definition
         env:
           ECS_CLUSTER_NAME: ${{ secrets.ECS_CLUSTER_NAME }}
           ECS_TASK_DEFINITION_FAMILY: ${{ secrets.ECS_TASK_DEFINITION_FAMILY }}
-          SUBNET_ID: ${{ secrets.SUBNET_ID }}
-          SECURITY_GROUP_ID: ${{ secrets.SECURITY_GROUP_ID }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
           AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
           ECR_REPOSITORY_NAME: ${{ secrets.ECR_REPOSITORY_NAME }}
+          SUBNET_ID: ${{ secrets.SUBNET_ID }}
+          SECURITY_GROUP_ID: ${{ secrets.SECURITY_GROUP_ID }}
           TARGET_GROUP_ARN: ${{ secrets.TARGET_GROUP_ARN }}
           CONTAINER_PORT: "3000"
         run: |
-          # Sanitize container name (replace invalid characters with hyphens)
-          CONTAINER_NAME=$(echo "$ECR_REPOSITORY_NAME" | sed 's/[^a-zA-Z0-9_-]/-/g')
+          IMAGE_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY_NAME:$GITHUB_SHA
 
-          # Get the latest task definition
+          # Get current task definition
           TASK_DEFINITION=$(aws ecs describe-task-definition \
             --task-definition $ECS_TASK_DEFINITION_FAMILY \
             --region $AWS_REGION)
 
-          # Update the image and container configuration in the task definition
+          # Update task definition with new image
           NEW_TASK_DEFINITION=$(echo $TASK_DEFINITION | \
-            jq --arg IMAGE "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY_NAME:$GITHUB_SHA" \
-            --arg CONTAINER_NAME "$CONTAINER_NAME" \
-            --arg CONTAINER_PORT "$CONTAINER_PORT" \
-            '.taskDefinition | .containerDefinitions[0].image = $IMAGE | 
-            .containerDefinitions[0].name = $CONTAINER_NAME |
-            .containerDefinitions[0].portMappings = [{
-              "containerPort": ($CONTAINER_PORT | tonumber),
-              "hostPort": ($CONTAINER_PORT | tonumber),
-              "protocol": "tcp"
-            }] | {
-              family: .family,
-              taskRoleArn: .taskRoleArn,
-              executionRoleArn: .executionRoleArn,
-              networkMode: .networkMode,
-              containerDefinitions: .containerDefinitions,
-              requiresCompatibilities: .requiresCompatibilities,
-              cpu: .cpu,
-              memory: .memory
-            }')
+            jq --arg IMAGE "$IMAGE_URI" \
+               --arg CONTAINER_PORT "$CONTAINER_PORT" \
+               '.taskDefinition | .containerDefinitions[0].image = $IMAGE | 
+               .containerDefinitions[0].portMappings[0].containerPort = ($CONTAINER_PORT | tonumber) | 
+               {family: .family, containerDefinitions: .containerDefinitions, requiresCompatibilities: .requiresCompatibilities, cpu: .cpu, memory: .memory}')
 
           # Register new task definition
           NEW_TASK_DEFINITION_ARN=$(aws ecs register-task-definition \
@@ -182,29 +132,15 @@ jobs:
             --query 'taskDefinition.taskDefinitionArn' \
             --output text)
 
-          # Check if the service exists
+          # Update ECS Service
           SERVICE_NAME="${ECS_TASK_DEFINITION_FAMILY}-service"
-          if aws ecs describe-services --cluster $ECS_CLUSTER_NAME --services $SERVICE_NAME --region $AWS_REGION | grep -q "MISSING"; then
-            # Create the service if it doesn't exist
-            aws ecs create-service \
-              --cluster $ECS_CLUSTER_NAME \
-              --service-name $SERVICE_NAME \
-              --task-definition $NEW_TASK_DEFINITION_ARN \
-              --desired-count 1 \
-              --launch-type FARGATE \
-              --network-configuration "awsvpcConfiguration={subnets=[$SUBNET_ID],securityGroups=[$SECURITY_GROUP_ID],assignPublicIp=ENABLED}" \
-              --load-balancers "targetGroupArn=$TARGET_GROUP_ARN,containerName=$CONTAINER_NAME,containerPort=$CONTAINER_PORT" \
-              --region $AWS_REGION
-          else
-            # Update the existing service
-            aws ecs update-service \
-              --cluster $ECS_CLUSTER_NAME \
-              --service $SERVICE_NAME \
-              --task-definition $NEW_TASK_DEFINITION_ARN \
-              --region $AWS_REGION
-          fi
+          aws ecs update-service \
+            --cluster $ECS_CLUSTER_NAME \
+            --service $SERVICE_NAME \
+            --task-definition $NEW_TASK_DEFINITION_ARN \
+            --region $AWS_REGION
 
-          # Wait for the service to stabilize
+          # Wait for service to stabilize
           aws ecs wait services-stable \
             --cluster $ECS_CLUSTER_NAME \
             --services $SERVICE_NAME \
