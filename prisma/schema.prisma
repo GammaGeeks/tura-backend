@@ -88,6 +88,7 @@ model Category {
 model Place {
   id Int @id @default(autoincrement())
   name String
+  featuredImg String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   sector Sector @relation(fields: [sectorId], references: [id], onDelete: Cascade)

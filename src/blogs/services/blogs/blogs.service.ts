@@ -128,18 +128,18 @@ export class BlogsService {
       slug = await SlugUtils.generateUniqueSlug(this.prisma, baseSlug);
     }
 
-    const folder = `blogs`;
-    const key = await this.s3Service.uploadFile(file, folder);
-
-    const url = await this.s3Service.generateSignedUrl(key);
-
-    const updatedData = slug
-      ? { ...data, slug, featuredImg: url, updatedAt: new Date() }
-      : {
-          ...data,
-          updatedAt: new Date(),
-          featuredImg: url,
-        };
+    let url: string | null = null;
+    if (file) {
+      const folder = `blogs`;
+      const key = await this.s3Service.uploadFile(file, folder);
+      url = await this.s3Service.generateSignedUrl(key);
+    }
+    const updatedData = {
+      ...data,
+      ...(slug && { slug }),
+      ...(url && { featuredImg: url }),
+      updatedAt: new Date(),
+    };
 
     const updatedBlog = await this.prisma.blog.update({
       where: { id },
