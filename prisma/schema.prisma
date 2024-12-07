@@ -146,7 +146,7 @@ model Blog {
   featuredImg String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  slug String?
+  slug String? @unique
   author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  category Category? @relation(fields: [categoryId], references: [id])
+  category Category? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 }

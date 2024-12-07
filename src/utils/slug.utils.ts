@@ -20,6 +20,17 @@ export class SlugUtils {
       slug = `${baseSlug}-${counter}`;
     }
 
+    while (true) {
+      const exists = await prisma.blog.findFirst({
+        where: { slug },
+      });
+
+      if (!exists) break;
+
+      counter++;
+      slug = `${baseSlug}-${counter}`;
+    }
+
     return slug;
   }
 

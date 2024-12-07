@@ -114,4 +114,37 @@ export class S3Service {
       throw error;
     }
   }
+
+  async deleteFile(imageUrl: string): Promise<boolean> {
+    let key: string;
+
+    if (imageUrl.includes(process.env.S3_CLOUDFRONT_DOMAIN)) {
+      // If using CloudFront URL
+      key = imageUrl.split(process.env.S3_CLOUDFRONT_DOMAIN + '/')[1];
+    } else if (imageUrl.includes(process.env.AWS_S3_BUCKET)) {
+      // If using direct S3 URL
+      key = imageUrl.split(process.env.AWS_S3_BUCKET + '.s3.amazonaws.com/')[1];
+    } else {
+      // If the URL is already a key
+      key = imageUrl;
+    }
+
+    if (!key) {
+      this.logger.warn(`Could not extract key from URL: ${imageUrl}`);
+      return false;
+    }
+
+    try {
+      const command = new DeleteObjectCommand({
+        Bucket: process.env.AWS_S3_BUCKET,
+        Key: key,
+      });
+
+      await this.s3Client.send(command);
+      return true;
+    } catch (error) {
+      this.logger.error(`Failed to delete file ${key}: ${error.message}`);
+      return false;
+    }
+  }
 }
