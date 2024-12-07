@@ -88,12 +88,9 @@ model Category {
 model Place {
   id Int @id @default(autoincrement())
   name String
+  featuredImg String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  province Province @relation(fields: [provinceId], references: [id], onDelete: Cascade)
-  provinceId Int
-  district District @relation(fields: [districtId], references: [id], onDelete: Cascade)
-  districtId Int
   sector Sector @relation(fields: [sectorId], references: [id], onDelete: Cascade)
   sectorId Int
   properties Property[]
@@ -104,9 +101,7 @@ model Province {
   name String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  places Place[]
   districts District[]
-  sectors Sector[]
 }
 
 model District {
@@ -117,7 +112,6 @@ model District {
   province Province @relation(fields: [provinceId], references: [id], onDelete: Cascade)
   provinceId Int
   sectors Sector[]
-  places Place[]
 }
 
 model Sector {
@@ -125,8 +119,6 @@ model Sector {
   name String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  province Province @relation(fields: [provinceId], references: [id], onDelete: Cascade)
-  provinceId Int
   district District @relation(fields: [districtId], references: [id], onDelete: Cascade)
   districtId Int
   places Place[]
@@ -155,7 +147,7 @@ model Blog {
   featuredImg String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  slug String?
+  slug String? @unique
   author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  category Category? @relation(fields: [categoryId], references: [id])
+  category Category? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 }
