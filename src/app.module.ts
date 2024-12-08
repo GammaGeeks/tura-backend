@@ -11,6 +11,9 @@ import { PlacesModule } from './places/places.module';
 import { BlogsModule } from './blogs/blogs.module';
 import { CategoriesModule } from './categories/categories.module';
 import { SharesModule } from './shares/shares.module';
+import { SectorsModule } from './sectors/sectors.module';
+import { ProvincesModule } from './provinces/provinces.module';
+import { DistrictsModule } from './districts/districts.module';
 
 @Module({
   imports: [
@@ -23,6 +26,9 @@ import { SharesModule } from './shares/shares.module';
     BlogsModule,
     CategoriesModule,
     SharesModule,
+    SectorsModule,
+    ProvincesModule,
+    DistrictsModule,
   ],
   providers: [JwtService, AuthService],
   controllers: [WelcomeController],

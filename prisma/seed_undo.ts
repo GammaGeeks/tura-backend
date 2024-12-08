@@ -6,6 +6,7 @@ const reverseSeed = async () => {
   try {
     // Delete Places first (assuming they are the most independent entities)
     await prisma.user.deleteMany();
+    await prisma.category.deleteMany();
     await prisma.place.deleteMany();
 
     // Delete Sectors
