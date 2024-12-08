@@ -4,6 +4,8 @@ import { users as userData } from './seedData/users';
 import { categories as categoryData } from './seedData/categories';
 import { provinces as provinceData } from './seedData/provinces';
 import { properties as propertyData } from './seedData/properties';
+import { kigaliSectors } from './seedData/sectors';
+import { places as placeData } from './seedData/places';
 
 const prisma = new PrismaClient();
 
@@ -55,23 +57,12 @@ async function main() {
   // 3. Seed Provinces, Districts, Sectors, and Places
   const createdProvinces = [];
   for (const province of provinceData) {
-    // Create the province
     const createdProvince = await prisma.province.create({
       data: {
         name: province.name,
         districts: {
           create: province.districts.map((district) => ({
             name: district.name,
-            sectors: {
-              create: district.sectors.map((sector) => ({
-                name: sector.name,
-                places: {
-                  create: sector.places.map((place) => ({
-                    name: place.name,
-                  })),
-                },
-              })),
-            },
           })),
         },
       },
@@ -80,9 +71,38 @@ async function main() {
     createdProvinces.push(createdProvince);
   }
 
-  console.log(
-    `Seeded ${createdProvinces.length} provinces with districts, sectors, and places.`,
-  );
+  console.log(`Seeded ${createdProvinces.length} provinces with districts`);
+
+  // 4. Seed Sectors
+  const createdSectors = [];
+  for (const sector of kigaliSectors) {
+    const createdSector = await prisma.sector.create({
+      data: {
+        name: sector.name,
+        district: {
+          connect: { id: sector.districtId }, // Ensure district IDs are correct
+        },
+      },
+    });
+
+    createdSectors.push(createdSector);
+  }
+
+  const createdPlaces = [];
+  for (const place of placeData) {
+    const createdPlace = await prisma.place.create({
+      data: {
+        name: place.name,
+        sector: {
+          connect: { id: place.sectorId }, // Ensure sector IDs are correct
+        },
+      },
+    });
+    createdPlaces.push(createdPlace);
+  }
+  console.log(`Seeded ${createdPlaces.length} places.`);
+
+  console.log(`Seeded ${createdSectors.length} sectors for Kigali.`);
 
   // 4. Seed Properties
   for (const property of propertyData) {
